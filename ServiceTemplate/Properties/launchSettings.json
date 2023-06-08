@@ -12,7 +12,7 @@
     "People.Api": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-      "applicationUrl": "https://localhost:{{ApplicationPort_Https}};{{ApplicationPort_Http}}",
+      "applicationUrl": "https://localhost:{{ApplicationPort_Https}};http://localhost:{{ApplicationPort_Http}}",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

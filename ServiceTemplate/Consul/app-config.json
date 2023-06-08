@@ -10,7 +10,7 @@
       "Port": 5438,
       "Username": "developer",
       "Password": "dev123",
-      "Database": "project_management_people"
+      "Database": "{{SolutionNameSnakeCase}}_{{ServiceNameSnakeCase}}"
     }
   },
   "SerilogSettings": {
