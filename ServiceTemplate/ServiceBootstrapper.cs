@@ -27,7 +27,7 @@ public class ServiceBootstrapper : Bootstrapper
         AppBuilder.Services.AddOpenTelemetry()
             .ConfigureResource(c =>
             {
-                c.AddService("{{ServiceName}}");
+                c.AddService("{{ServiceNameKebabCaseAndApi}}");
             })
             .WithMetrics(builder =>
             {

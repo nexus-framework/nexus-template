@@ -16,14 +16,14 @@ COPY ["libraries/src/Nexus.Management/Nexus.Management.csproj", "libraries/src/N
 COPY ["libraries/src/Nexus.Telemetry/Nexus.Telemetry.csproj", "libraries/src/Nexus.Telemetry/"]
 COPY ["Directory.Packages.props", "Directory.Packages.props"]
 
-COPY ["services/{{ServiceName}}/src/{{ProjectName}}/nuget.config", "services/{{ServiceName}}/src/{{ProjectName}}/"]
-COPY ["services/{{ServiceName}}/src/{{ProjectName}}/{{ProjectName}}.csproj", "services/{{ServiceName}}/src/{{ProjectName}}/"]
+COPY ["services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/nuget.config", "services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/"]
+COPY ["services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/{{ProjectName}}.csproj", "services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/"]
 
-RUN dotnet restore "services/{{ServiceName}}/src/{{ProjectName}}/{{ProjectName}}.csproj"
+RUN dotnet restore "services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/{{ProjectName}}.csproj"
 
 COPY . .
 
-WORKDIR "/src/services/{{ServiceName}}/src/{{ProjectName}}"
+WORKDIR "/src/services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}"
 RUN dotnet build "{{ProjectName}}.csproj" -c Release -o /app/build
 
 FROM build AS publish

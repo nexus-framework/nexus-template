@@ -1,4 +1,4 @@
-﻿key_prefix "{{ServiceName}}/" {
+﻿key_prefix "{{ServiceNameKebabCaseAndApi}}/" {
   policy = "read"
   policy = "write"
   policy = "list"
