@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "People.Api": {
+    "{{ProjectName}}": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:{{ApplicationPort_Https}};http://localhost:{{ApplicationPort_Http}}",
