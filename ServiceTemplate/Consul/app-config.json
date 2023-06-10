@@ -18,7 +18,7 @@
       "Uri": "https://localhost:9200",
       "Username": "elastic",
       "Password": "dev123",
-      "IndexFormat": "logs-{{ServiceName}}-{0:yyyy.MM}"
+      "IndexFormat": "logs-{{ServiceNameKebabCaseAndApi}}-{0:yyyy.MM}"
     }
   },
   "Serilog": {
@@ -33,7 +33,7 @@
   "Consul": {
     "Token": "4f67d4a8-606f-6133-84f4-5c69fe53a1bc",
     "Discovery": {
-      "ServiceName": "{{ServiceName}}",
+      "ServiceName": "{{ServiceNameKebabCaseAndApi}}",
       "Scheme": "https",
       "Retry": {
         "Enabled": true,
@@ -43,7 +43,7 @@
   },
   "TelemetrySettings": {
     "Endpoint": "http://localhost:4317",
-    "ServiceName": "{{ServiceName}}",
+    "ServiceName": "{{ServiceNameKebabCaseAndApi}}",
     "ServiceVersion": "v1",
     "EnableAlwaysOnSampler": false,
     "SampleProbability": 0.2,
