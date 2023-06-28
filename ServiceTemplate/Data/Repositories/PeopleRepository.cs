@@ -4,7 +4,7 @@ using {{RootNamespace}}.Entities;
 
 namespace {{RootNamespace}}.Data.Repositories;
 
-public class PeopleRepository : EfCustomRepository<Person>
+public class PeopleRepository : EfNexusRepository<Person>
 {
     public PeopleRepository(ApplicationDbContext context) : base(context)
     {

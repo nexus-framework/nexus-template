@@ -2,7 +2,7 @@
 
 namespace {{RootNamespace}}.Entities;
 
-public class Person : AuditableEntityBase
+public class Person : AuditableNexusEntityBase
 {
     public Person(string name, string email)
     {
