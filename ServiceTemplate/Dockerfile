@@ -7,12 +7,14 @@ FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 
 COPY ["Directory.Packages.props", "Directory.Packages.props"]
+COPY ["Directory.Build.props", "Directory.Build.props"]
 COPY ["services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/nuget.config", "services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/"]
 COPY ["services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/{{ProjectName}}.csproj", "services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/"]
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet restore "services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}/{{ProjectName}}.csproj"
 
+COPY ["appsettings.Global.json", "appsettings.Global.json"]
 COPY . .
 
 WORKDIR "/src/services/{{ServiceNameKebabCaseAndApi}}/src/{{ProjectName}}"

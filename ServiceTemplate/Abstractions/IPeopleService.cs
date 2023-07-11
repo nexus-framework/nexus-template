@@ -1,4 +1,6 @@
-﻿using {{RootNamespace}}.DTO;
+﻿using LanguageExt.Common;
+using {{RootNamespace}}.DTO;
+using {{RootNamespace}}.Entities;
 
 namespace {{RootNamespace}}.Abstractions;
 
@@ -6,11 +8,11 @@ public interface IPeopleService
 {
     Task<List<PersonDto>> GetAllAsync();
 
-    Task<PersonDto> CreateAsync(PersonDto personSummary);
+    Task<Result<Person>> CreateAsync(Person personSummary);
 
-    Task<PersonDto?> GetByIdAsync(int id);
+    Task<Result<PersonDto>> GetByIdAsync(int id);
 
-    Task<PersonDto?> UpdateNameAsync(int id, string name);
+    Task<Result<Person>> UpdateNameAsync(int id, string name);
     
     Task DeleteAsync(int id);
 }

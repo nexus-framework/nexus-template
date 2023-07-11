@@ -3,11 +3,13 @@ using System.Diagnostics.Metrics;
 using System.Net.Mime;
 using AutoMapper;
 using FluentValidation;
-using FluentValidation.Results;
+using LanguageExt.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using {{RootNamespace}}.Abstractions;
 using {{RootNamespace}}.DTO;
+using {{RootNamespace}}.Entities;
+using {{RootNamespace}}.Exceptions;
 using {{RootNamespace}}.Model;
 using {{RootNamespace}}.Telemetry;
 
@@ -17,8 +19,6 @@ namespace {{RootNamespace}}.Controllers;
 [Route("api/v1")]
 public class PeopleController : ControllerBase
 {
-    private readonly IValidator<PersonCreateRequestModel> _personCreateRequestModelvalidator;
-    private readonly IValidator<PersonUpdateRequestModel> _personUpdateRequestModelvalidator;
     private readonly IPeopleService _peopleService;
     private readonly IMapper _mapper;
     private readonly ActivitySource _activitySource;
@@ -27,18 +27,18 @@ public class PeopleController : ControllerBase
     public PeopleController(
         IPeopleService peopleService,
         IMapper mapper,
-        IValidator<PersonCreateRequestModel> personCreateRequestModelvalidator,
-        IValidator<PersonUpdateRequestModel> personUpdateRequestModelvalidator,
         IPeopleInstrumentation peopleInstrumentation)
     {
         _peopleService = peopleService;
         _mapper = mapper;
-        _personCreateRequestModelvalidator = personCreateRequestModelvalidator;
-        _personUpdateRequestModelvalidator = personUpdateRequestModelvalidator;
         _activitySource = peopleInstrumentation.ActivitySource;
         _getAllPeopleCounter = peopleInstrumentation.GetAllPeopleCounter;
     }
-
+    
+    /// <summary>
+    ///     Gets list of people.
+    /// </summary>
+    /// <returns>List of people.</returns>
     [Authorize("read:people")]
     [HttpGet("[controller]")]
     [Produces(MediaTypeNames.Application.Json)]
@@ -58,74 +58,99 @@ public class PeopleController : ControllerBase
         _getAllPeopleCounter.Add(1);
         return Ok(mappedPeople);
     }
-
+    
+    /// <summary>
+    ///     Gets a person by id.
+    /// </summary>
+    /// <param name="id">Person id.</param>
+    /// <returns>Person by the given id.</returns>
     [Authorize("read:people")]
     [HttpGet("[controller]/{id}")]
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PersonResponseModel))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundResult))]
-    public async Task<ActionResult<PersonResponseModel>> GetById(int id)
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(PersonNotFoundException))]
+    public async Task<IActionResult> GetById(int id)
     {
-        PersonDto? person = await _peopleService.GetByIdAsync(id);
+        var result =  await _peopleService.GetByIdAsync(id);
 
-        if (person == null)
-        {
-            return NotFound();
-        }
+        return result.Match<IActionResult>(person => Ok(_mapper.Map<PersonResponseModel>(person)),
+            error =>
+            {
+                if (error is PersonNotFoundException)
+                {
+                    return NotFound();
+                }
 
-        PersonResponseModel mappedPerson = _mapper.Map<PersonResponseModel>(person);
-
-        return Ok(mappedPerson);
+                return StatusCode(500, error);
+            });
     }
 
+    /// <summary>
+    ///     Creates a new person.
+    /// </summary>
+    /// <param name="model">Person to create.</param>
+    /// <returns>Created person.</returns>
     [Authorize("write:people")]
     [HttpPost("[controller]")]
     [Consumes(MediaTypeNames.Application.Json)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(List<string>))]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PersonResponseModel))]
-    public async Task<ActionResult<PersonResponseModel>> Create([FromBody] PersonCreateRequestModel model)
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(List<string>))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(CreatePersonException))]
+    public async Task<IActionResult> Create([FromBody] PersonCreateRequestModel model)
     {
-        ValidationResult validationResult = await _personCreateRequestModelvalidator.ValidateAsync(model);
-
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage).ToList());
-        }
-
-        PersonDto person = _mapper.Map<PersonDto>(model);
-
-        PersonDto createdPersonSummary = await _peopleService.CreateAsync(person);
-
-        PersonResponseModel response = _mapper.Map<PersonResponseModel>(createdPersonSummary);
-
-        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
+        Person person = _mapper.Map<Person>(model);
+        Result<Person> createPersonResult = await _peopleService.CreateAsync(person);
+        
+        return createPersonResult.Match<IActionResult>(
+            createdPerson =>
+            {
+                PersonResponseModel response = _mapper.Map<PersonResponseModel>(createdPerson);
+                return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
+            },
+            ex =>
+            {
+                return ex switch
+                {
+                    ValidationException => BadRequest(ex),
+                    CreatePersonException => StatusCode(500, ex),
+                    _ => StatusCode(418),
+                };
+            });
     }
-
+    
+    /// <summary>
+    ///     Update person details.
+    /// </summary>
+    /// <param name="id">Id of the person to update.</param>
+    /// <param name="model">Details to update.</param>
+    /// <returns>Updated person.</returns>
     [Authorize("update:people")]
     [HttpPut("[controller]/{id}")]
     [Consumes(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PersonResponseModel))]
-    public async Task<ActionResult<PersonResponseModel>> Update(int id, [FromBody] PersonUpdateRequestModel model)
+    public async Task<IActionResult> Update(int id, [FromBody] PersonUpdateRequestModel model)
     {
-        ValidationResult validationResult = await _personUpdateRequestModelvalidator.ValidateAsync(model);
-
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage).ToList());
-        }
-
-        PersonDto? updatedPerson = await _peopleService.UpdateNameAsync(id, model.Name);
-
-        if (updatedPerson == null)
-        {
-            return BadRequest($"Unable to find person with the id {id}");
-        }
-
-        PersonResponseModel response = _mapper.Map<PersonResponseModel>(updatedPerson);
-        return Ok(response);
+        Result<Person> result = await _peopleService.UpdateNameAsync(id, model.Name);
+        return result.Match<IActionResult>(
+            updatedPerson => Ok(_mapper.Map<PersonResponseModel>(updatedPerson)),
+            ex =>
+            {
+                return ex switch
+                {
+                    PersonNotFoundException => BadRequest(ex),
+                    AnotherPersonExistsWithSameEmailException => BadRequest(ex),
+                    ValidationException => BadRequest(ex),
+                    _ => StatusCode(500, ex),
+                };
+            });
     }
 
+    /// <summary>
+    ///     Delete a person.
+    /// </summary>
+    /// <param name="id">Person Id.</param>
     [Authorize("delete:people")]
     [HttpDelete("[controller]/{id}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(List<string>))]
