@@ -11,10 +11,9 @@
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
         <PackageReference Include="LanguageExt.Core" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
-	<PackageReference Include="Nexus.Framework.Web" />
+        <PackageReference Include="Nexus.Framework.Web" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" />
-        <PackageReference Include="Polly.Extensions.Http" />
+        <PackageReference Include="Polly.Extensions" />
     </ItemGroup>
 
     <ItemGroup>
